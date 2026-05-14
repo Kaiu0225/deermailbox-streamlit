@@ -335,7 +335,7 @@ except Exception as e:
     st.stop()
 
 keyword = active_name.lower()
-result = df[df["購買人"].astype(str).str.strip().str.lower().str.contains(keyword, na=False)].copy()
+result = df[df["購買人"].astype(str).str.strip().str.lower() == keyword].copy()
 
 if result.empty:
     st.warning(f"找不到「{active_name}」的相關紀錄，請確認姓名是否正確。")
