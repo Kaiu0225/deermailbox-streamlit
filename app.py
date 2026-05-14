@@ -216,19 +216,19 @@ st.markdown("""
         background: linear-gradient(135deg, #C5A482 0%, #b48353 100%) !important;
         color: #FFFFFF !important;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(99,102,241,0.35) !important;
+        box-shadow: 0 4px 15px rgba(197,164,130,0.35) !important;
         transition: opacity 0.2s, box-shadow 0.2s, transform 0.1s !important;
         margin-top: 0.1rem !important;
     }
     div[data-testid="stButton"] button:hover {
         opacity: 0.92 !important;
-        box-shadow: 0 6px 20px rgba(99,102,241,0.5) !important;
+        box-shadow: 0 6px 20px rgba(197,164,130,0.5) !important;
         transform: translateY(-1px) !important;
     }
     div[data-testid="stButton"] button:active {
         opacity: 1 !important;
         transform: translateY(0px) !important;
-        box-shadow: 0 2px 8px rgba(99,102,241,0.3) !important;
+        box-shadow: 0 2px 8px rgba(197,164,130,0.3) !important;
     }
 
     /* ── 隱藏 Streamlit 預設元素 ── */
