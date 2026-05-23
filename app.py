@@ -415,12 +415,12 @@ st.markdown(f"""
         <div class="lbl">總筆數</div>
     </div>
     <div class="stat-card">
-        <div class="num" style="color:#16a34a">{arrived}</div>
-        <div class="lbl">已運回</div>
-    </div>
-    <div class="stat-card">
         <div class="num" style="color:#2563eb">{shipped}</div>
         <div class="lbl">已寄出</div>
+    </div>
+    <div class="stat-card">
+        <div class="num" style="color:#16a34a">{arrived}</div>
+        <div class="lbl">已運回</div>
     </div>
     <div class="stat-card">
         <div class="num" style="color:#ca8a04">{pending}</div>
