@@ -169,6 +169,7 @@ st.markdown("""
         font-weight: 600;
     }
     .badge-done    { background: #dcfce7; color: #16a34a; }
+    .badge-shipped { background: #dbeafe; color: #2563eb; }
     .badge-pending { background: #fef9c3; color: #ca8a04; }
 
     /* ── 公告資訊列 ── */
@@ -240,8 +241,8 @@ st.markdown("""
 @st.cache_data(ttl=60)
 def load_data():
     conn = st.connection("gsheets", type=GSheetsConnection)
-    df = conn.read(worksheet="總表", usecols=[0, 1, 2, 3, 4, 5], ttl=0)
-    df.columns = ["購買日期", "購買人", "商品名稱", "物流單號", "包裹重量", "運回日期"]
+    df = conn.read(worksheet="總表", usecols=[0, 1, 2, 3, 4, 5, 6], ttl=0)
+    df.columns = ["購買日期", "購買人", "商品名稱", "物流單號", "包裹重量", "運回日期", "狀態"]
     return df
 
 @st.cache_data(ttl=60)
@@ -273,6 +274,10 @@ def parse_date(val):
         return pd.to_datetime(str(val).strip(), format="%Y/%m/%d").date()
     except Exception:
         return None
+
+def is_checked(val) -> bool:
+    """判斷 Google Sheets 核取方塊是否已勾選（勾選為 1.0，未勾選為 0.0）。"""
+    return val == 1.0
 
 def get_badge(val) -> str:
     """
@@ -342,8 +347,11 @@ if result.empty:
     st.stop()
 
 # ── 徽章欄、排序 ─────────────────────────────────────────────────────────────
-# 徽章：""（無日期）/ "已運回"（≤今日）/ "待運回"（>今日）
-result["_badge"] = result["運回日期"].apply(get_badge)
+# 徽章：先依運回日期計算，再以「狀態」核取方塊覆寫為「已寄出」
+result["_badge"] = result.apply(
+    lambda row: "已寄出" if is_checked(row["狀態"]) else get_badge(row["運回日期"]),
+    axis=1,
+)
 
 # 共用：購買日期 datetime 欄
 result["_購買日期_sort"] = pd.to_datetime(
@@ -355,15 +363,15 @@ result["_運回日期_sort"] = pd.to_datetime(
 )
 
 # 分組排序後合併：
-#   已運回  → 依運回日期升冪
-#   其餘    → 待運回 → 無日期；同狀態內依購買日期升冪
+#   已運回 / 已寄出  → 依運回日期升冪
+#   其餘             → 待運回 → 無日期；同狀態內依購買日期升冪
 df_arrived = (
-    result[result["_badge"] == "已運回"]
+    result[result["_badge"].isin(["已運回", "已寄出"])]
     .sort_values("_運回日期_sort", ascending=True)
 )
 
 _pending_order = {"待運回": 0, "": 1}
-df_pending = result[result["_badge"] != "已運回"].copy()
+df_pending = result[~result["_badge"].isin(["已運回", "已寄出"])].copy()
 df_pending["_pending_sort"] = df_pending["_badge"].map(_pending_order)
 df_pending = df_pending.sort_values(
     by=["_pending_sort", "_購買日期_sort"],
@@ -390,9 +398,10 @@ def date_matches_next(val, next_date_str: str) -> bool:
     return d1 == d2
 
 # ── 統計摘要 ──────────────────────────────────────────────────────────────────
-total   = len(result)
-arrived = (result["_badge"] == "已運回").sum()
-pending = (result["_badge"] == "待運回").sum()
+total    = len(result)
+arrived  = (result["_badge"] == "已運回").sum()
+shipped  = (result["_badge"] == "已寄出").sum()
+pending  = (result["_badge"] == "待運回").sum()
 
 next_shipment_weight = result.loc[
     result["運回日期"].apply(lambda v: date_matches_next(v, next_date)),
@@ -408,6 +417,10 @@ st.markdown(f"""
     <div class="stat-card">
         <div class="num" style="color:#16a34a">{arrived}</div>
         <div class="lbl">已運回</div>
+    </div>
+    <div class="stat-card">
+        <div class="num" style="color:#2563eb">{shipped}</div>
+        <div class="lbl">已寄出</div>
     </div>
     <div class="stat-card">
         <div class="num" style="color:#ca8a04">{pending}</div>
@@ -427,6 +440,8 @@ for _, row in result.iterrows():
     _b = row["_badge"]
     if _b == "已運回":
         badge = '<span class="badge badge-done">已運回</span>'
+    elif _b == "已寄出":
+        badge = '<span class="badge badge-shipped">已寄出</span>'
     elif _b == "待運回":
         badge = '<span class="badge badge-pending">待運回</span>'
     else:
