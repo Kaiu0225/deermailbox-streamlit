@@ -427,20 +427,16 @@ except Exception:
 st.markdown(f"""
 <div class="stat-row">
     <div class="stat-card">
-        <div class="num" style="color:#2563eb">{shipped}</div>
-        <div class="lbl">已寄出</div>
-    </div>
-    <div class="stat-card">
         <div class="num" style="color:#16a34a">{arrived}</div>
         <div class="lbl">已運回</div>
     </div>
     <div class="stat-card">
-        <div class="num" style="color:#ca8a04">{pending}</div>
-        <div class="lbl">待運回</div>
-    </div>
-    <div class="stat-card">
         <div class="num">{arrived_weight:.2f}</div>
         <div class="lbl">已到貨重量 (kg)</div>
+    </div>
+    <div class="stat-card">
+        <div class="num" style="color:#ca8a04">{pending}</div>
+        <div class="lbl">待運回</div>
     </div>
     <div class="stat-card">
         <div class="num">{next_shipment_weight:.2f}</div>
