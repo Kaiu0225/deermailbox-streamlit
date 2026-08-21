@@ -253,6 +253,13 @@ def load_meta():
     next_date = str(cols[0]).strip() if len(cols) > 0 else "—"
     return next_date
 
+@st.cache_data(ttl=60)
+def load_arrived_weight():
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df = conn.read(worksheet="運費計算", usecols=[0, 1], ttl=0)
+    df.columns = ["姓名", "重量(kg)"]
+    return df
+
 # ── 輔助函式 ──────────────────────────────────────────────────────────────────
 def is_valid(val) -> bool:
     if val is None:
@@ -408,12 +415,17 @@ next_shipment_weight = result.loc[
     "包裹重量"
 ].apply(weight_float).sum()
 
+try:
+    arrived_weight_df = load_arrived_weight()
+    _matched = arrived_weight_df[
+        arrived_weight_df["姓名"].astype(str).str.strip().str.lower() == keyword
+    ]
+    arrived_weight = _matched["重量(kg)"].apply(weight_float).sum()
+except Exception:
+    arrived_weight = 0.0
+
 st.markdown(f"""
 <div class="stat-row">
-    <div class="stat-card">
-        <div class="num">{total}</div>
-        <div class="lbl">總筆數</div>
-    </div>
     <div class="stat-card">
         <div class="num" style="color:#2563eb">{shipped}</div>
         <div class="lbl">已寄出</div>
@@ -425,6 +437,10 @@ st.markdown(f"""
     <div class="stat-card">
         <div class="num" style="color:#ca8a04">{pending}</div>
         <div class="lbl">待運回</div>
+    </div>
+    <div class="stat-card">
+        <div class="num">{arrived_weight:.2f}</div>
+        <div class="lbl">已到貨重量 (kg)</div>
     </div>
     <div class="stat-card">
         <div class="num">{next_shipment_weight:.2f}</div>
